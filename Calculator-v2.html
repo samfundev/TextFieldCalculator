@@ -127,7 +127,7 @@
 				let decorationKeys = new Set();
 				function makeDecoration(key, options) {
 					if (!decorationKeys.has(key)) {
-						editor._codeEditorService.registerDecorationType(key, options);
+						editor._codeEditorService.registerDecorationType("result", key, options);
 
 						decorationKeys.add(key);
 					}
