@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="initial-scale=1">
 		<title>Text-Field Calculator</title>
-		<script src="jquery-3.5.1.min.js"></script>
-		<script src="math.min.js"></script>
+		<script src="jquery-3.6.0.min.js"></script>
+		<script src="math.js"></script>
 		<script>
 			function getType(o) {
 				return Object.prototype.toString.call(o).match(/^\[object\s(.*)\]$/)[1].toLowerCase();
@@ -95,26 +97,32 @@
 			})
 		</script>
 		<style>
-			* {
-				font-size: 35px;
-                font-family: monospace;
-			}
-
 			body {
 				margin-left: 10px;
 				margin-right: 10px;
+
+				font-size: 35px;
+				font-family: monospace;
 			}
 
-            h1 {
-                border-bottom: 1px solid black;
-            }
+			.header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				border-bottom: 1px solid black;
+				margin-bottom: 0.25em;
+			}
+
+			.links {
+				font-size: 75%;
+			}
 
 			.input {
 				width: 100%;
-                box-sizing: border-box;
+				box-sizing: border-box;
 				height: 30vh;
 				resize: vertical;
-                margin-bottom: .5em;
+				margin-bottom: .5em;
 			}
 
 			.error {
@@ -127,6 +135,10 @@
 					color: white;
 				}
 
+				.header {
+					border-bottom-color: white;
+				}
+
 				textarea {
 					background-color: rgb(40, 40, 40);
 					color: inherit;
@@ -134,11 +146,25 @@
 					border-style: solid;
 					border-width: 1px;
 				}
+
+				a:link {
+					color: rgb(170, 170, 170);
+				}
+
+				a:visited {
+					color: rgb(130, 130, 130);
+				}
 			}
 		</style>
 	</head>
 	<body>
-		<h1>Text-Field Calculator</h1>
+		<div class="header">
+			<b>Text-Field Calculator</b>
+			<div class="links">
+				<a href="https://mathjs.org/docs/index.html#documentation">Documentation</a>
+				<a href="https://github.com/samfundev/TextFieldCalculator">Source</a>
+			</div>
+		</div>
 		<textarea class="input" autofocus></textarea>
 		<div class="output-wrap">
 			<div style="font-weight: bold;">Output:</div><div class="output"></div>
