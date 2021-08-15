@@ -91,6 +91,10 @@
 					}
 				});
 				monaco.languages.setMonarchTokensProvider("math", {
+					keywords: [
+						'true', 'false'
+					],
+
 					operators: [
 						'=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=',
 						'&&', '||', '++', '--', '+', '-', '*', '/', '&', '|', '^', '%',
@@ -106,11 +110,15 @@
 
 					tokenizer: {
 						root: [
-							[/[a-z]+/, 'identifier'],
+							[
+								/[a-z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F][0-9a-z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F]*/u,
+								{ cases: { '@keywords': 'keyword',
+										   '@default': 'identifier' } }
+							],
 
 							[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
 							[/0[xX][0-9a-fA-F]+/, 'number.hex'],
-							[/\d+/, 'number'],
+							[/\d+(e\d+)?/, 'number'],
 
 							[/[()[\]]/, '@brackets'],
 
@@ -167,6 +175,7 @@
 					}
 				});
 
+				// Actions
 				editor.addAction({
 					id: "replace-result-all",
 					label: "Replace Everything with the Result",
