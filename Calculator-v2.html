@@ -144,6 +144,78 @@
 					}
 				});
 
+				editor.addAction({
+					id: "replace-result-all",
+					label: "Replace Everything with the Result",
+					keybindings: [
+						monaco.KeyCode.Tab
+					],
+					contextMenuGroupId: "1_modification",
+					run: function() {
+						editor.pushUndoStop();
+						editor.executeEdits("replace-result-all", [{
+							range: new monaco.Range(1, 1, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+							text: math.evaluate(editor.getValue()).toString()
+						}]);
+					}
+				});
+
+				editor.addAction({
+					id: "replace-result-line",
+					label: "Replace Line with it's Result",
+					keybindings: [
+						monaco.KeyMod.Shift | monaco.KeyCode.Tab
+					],
+					contextMenuGroupId: "1_modification",
+					run: function() {;
+						const lineNumber = editor.getPosition().lineNumber;
+						const result = lineResults[lineNumber - 1];
+						if (result == null)
+							return;
+
+						editor.pushUndoStop();
+						editor.executeEdits("replace-result-line", [{
+							range: new monaco.Range(lineNumber, 1, lineNumber, Number.MAX_SAFE_INTEGER),
+							text: result.toString()
+						}]);
+					}
+				});
+
+				editor.addAction({
+					id: "insert-result-all",
+					label: "Insert a New Line with the Result",
+					keybindings: [],
+					contextMenuGroupId: "1_modification",
+					run: function() {
+						const lineNumber = editor.getPosition().lineNumber;
+
+						editor.pushUndoStop();
+						editor.executeEdits("insert-result-all", [{
+							range: new monaco.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER),
+							text: "\n" + math.evaluate(editor.getValue()).toString()
+						}]);
+					}
+				});
+
+				editor.addAction({
+					id: "insert-result-line",
+					label: "Insert a New Line with the Result of the Current Line",
+					keybindings: [],
+					contextMenuGroupId: "1_modification",
+					run: function() {;
+						const lineNumber = editor.getPosition().lineNumber;
+						const result = lineResults[lineNumber - 1];
+						if (result == null)
+							return;
+
+						editor.pushUndoStop();
+						editor.executeEdits("insert-result-line", [{
+							range: new monaco.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER),
+							text: "\n" + result.toString()
+						}]);
+					}
+				});
+
 				window.editor = editor;
 
 				editor.onDidChangeModelContent((event) => update());
@@ -160,12 +232,15 @@
 				}
 
 				let oldDecorations = [];
+				let lineResults = [];
 				function update() {
 					const parser = math.parser();
 					const lines = editor.getValue().split("\n");
 					const decorators = [];
 					const usedKeys = new Set();
 					const markers = [];
+
+					lineResults = [];
 
 					// Parse each line of math
 					for (let [index, line] of lines.entries()) {
@@ -186,6 +261,8 @@
 
 						if (result == undefined || typeof result == "function")
 							continue;
+
+						lineResults[index] = result;
 
 						// Add any results are decorators.
 						const key = hashCode(result.toString());
