@@ -54,7 +54,7 @@
 						kind: typeof value == "function" ? monaco.languages.CompletionItemKind.Function : monaco.languages.CompletionItemKind.Constant,
 						insertText: typeof value == "function" ? `${key}($0)` : key,
 						insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-						description: math.help(value).doc.description
+						documentation: math.help(value).doc.description
 					}
 				});
 
