@@ -157,7 +157,8 @@
 				var editor = monaco.editor.create(document.getElementById('container'), {
 					language: "math",
 					value: persistance.value,
-					theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs"
+					theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs",
+					mouseWheelZoom: true
 				}, {
 					storageService: {
 						get() {},
