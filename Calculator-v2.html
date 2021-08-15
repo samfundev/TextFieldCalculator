@@ -79,6 +79,7 @@
 					defaultToken: "invalid",
 
 					symbols: /[=><!~?:&|+\-*\/\^%]+/,
+					escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
 					tokenizer: {
 						root: [
@@ -96,6 +97,28 @@
 									'@default': ''
 								}
 							}],
+
+							[/[;,]/, 'delimiter'],
+
+							// strings
+							[/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
+							[/'([^'\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
+							[/"/, 'string', '@string_double'],
+							[/'/, 'string', '@string_single']
+						],
+
+						string_double: [
+							[/[^\\"]+/, 'string'],
+							[/@escapes/, 'string.escape'],
+							[/\\./, 'string.escape.invalid'],
+							[/"/, 'string', '@pop']
+						],
+
+						string_single: [
+							[/[^\\']+/, 'string'],
+							[/@escapes/, 'string.escape'],
+							[/\\./, 'string.escape.invalid'],
+							[/'/, 'string', '@pop']
 						]
 					}
 				});
