@@ -39,7 +39,7 @@
 
 			require.config({ paths: { 'vs': 'monaco-editor/min/vs' }});
 			require(['vs/editor/editor.main'], function() {
-				const suggestions = Object.entries(math)
+				const baseSuggestions = Object.entries(math)
 				.filter(([key, value]) => {
 					try {
 						math.help(value);
@@ -62,6 +62,29 @@
 				monaco.languages.register({ id: "math" });
 				monaco.languages.registerCompletionItemProvider("math", {
 					provideCompletionItems: function(model, position) {
+						const suggestions = [...baseSuggestions];
+
+						for (let i = 1; i < position.lineNumber; i++) {
+							const result = lineResults[i - 1];
+							if (result == undefined)
+								continue;
+
+							suggestions.push(
+								{
+									label: `line${i}`,
+									insertText: `line${i}`,
+									kind: monaco.languages.CompletionItemKind.Variable,
+									documentation: `The result of line ${i}. (${result})`
+								},
+								{
+									label: `l${i}`,
+									insertText: `l${i}`,
+									kind: monaco.languages.CompletionItemKind.Variable,
+									documentation: `The result of line ${i}. (${result})`
+								}
+							);
+						}
+
 						return {
 							suggestions: suggestions
 						};
@@ -263,6 +286,9 @@
 							continue;
 
 						lineResults[index] = result;
+
+						parser.set(`l${index + 1}`, result);
+						parser.set(`line${index + 1}`, result);
 
 						// Add any results are decorators.
 						const key = hashCode(result.toString());
