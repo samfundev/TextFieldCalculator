@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="initial-scale=1">
+		<title>Text-Field Calculator</title>
+		<script src="math.js"></script>
+		<style>
+			html, body {
+				height: 100%;
+			}
+
+			body {
+				margin: 0;
+			}
+
+			#container {
+				overflow: hidden;
+				height: 100%;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				body {
+					background-color: #1e1e1e;
+				}
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+
+		<textarea id="persistance" name="persistance" hidden></textarea>
+
+		<script src="monaco-editor/min/vs/loader.js"></script>
+		<script>
+			// https://stackoverflow.com/a/34842797/8213163
+			const hashCode = s => s.split('').reduce((a,b) => (((a << 5) - a) + b.charCodeAt(0))|0, 0)
+
+			require.config({ paths: { 'vs': 'monaco-editor/min/vs' }});
+			require(['vs/editor/editor.main'], function() {
+				const suggestions = Object.entries(math)
+				.filter(([key, value]) => {
+					try {
+						math.help(value);
+						return true;
+					} catch (exception) {
+						return false;
+					}
+				})
+				.map(([key, value]) => {
+					return {
+						label: key,
+						kind: typeof value == "function" ? monaco.languages.CompletionItemKind.Function : monaco.languages.CompletionItemKind.Constant,
+						insertText: typeof value == "function" ? `${key}($0)` : key,
+						insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+						description: math.help(value).doc.description
+					}
+				});
+
+				// Define math language
+				monaco.languages.register({ id: "math" });
+				monaco.languages.registerCompletionItemProvider("math", {
+					provideCompletionItems: function(model, position) {
+						return {
+							suggestions: suggestions
+						};
+					}
+				});
+				monaco.languages.setMonarchTokensProvider("math", {
+					operators: [
+						'=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=',
+						'&&', '||', '++', '--', '+', '-', '*', '/', '&', '|', '^', '%',
+						'<<', '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=', '^=',
+						'%=', '<<=', '>>=', '>>>='
+					],
+
+					ignoreCase: true,
+					defaultToken: "invalid",
+
+					symbols: /[=><!~?:&|+\-*\/\^%]+/,
+
+					tokenizer: {
+						root: [
+							[/[a-z]+/, 'identifier'],
+
+							[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+							[/0[xX][0-9a-fA-F]+/, 'number.hex'],
+							[/\d+/, 'number'],
+
+							[/[()[\]]/, '@brackets'],
+
+							[/@symbols/, {
+								cases: {
+									'@operators': 'operator',
+									'@default': ''
+								}
+							}],
+						]
+					}
+				});
+
+				var editor = monaco.editor.create(document.getElementById('container'), {
+					language: "math",
+					value: persistance.value,
+					theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs"
+				}, {
+					storageService: {
+						get() {},
+						getBoolean(key) {
+							if (key === "expandSuggestionDocs")
+								return true;
+
+							return false;
+						},
+						store() {},
+						onWillSaveState() {},
+						onDidChangeStorage() {},
+						remove() {}
+					}
+				});
+
+				window.editor = editor;
+
+				editor.onDidChangeModelContent((event) => update());
+
+				let decorationKeys = new Set();
+				function makeDecoration(key, options) {
+					if (!decorationKeys.has(key)) {
+						editor._codeEditorService.registerDecorationType(key, options);
+
+						decorationKeys.add(key);
+					}
+
+					return editor._codeEditorService.resolveDecorationOptions(key, true);
+				}
+
+				let oldDecorations = [];
+				function update() {
+					const parser = math.parser();
+					const lines = editor.getValue().split("\n");
+					const decorators = [];
+					const usedKeys = new Set();
+					const markers = [];
+
+					// Parse each line of math
+					for (let [index, line] of lines.entries()) {
+						let result;
+						try {
+							result = parser.evaluate(line.trim());
+						} catch (exception) {
+							// Add any exceptions as markers
+							markers.push({
+								message: exception.message,
+								startColumn: exception.char ?? 1,
+								endColumn: exception.char ?? Number.MAX_SAFE_INTEGER,
+								startLineNumber: index + 1,
+								endLineNumber: index + 1
+							});
+							continue;
+						}
+
+						if (result == undefined || typeof result == "function")
+							continue;
+
+						// Add any results are decorators.
+						const key = hashCode(result.toString());
+						decorators.push({ range: new monaco.Range(index + 1, Number.MAX_SAFE_INTEGER, index + 1, Number.MAX_SAFE_INTEGER), options: makeDecoration(key, {
+							after: {
+								color: "gray",
+								margin: "0 0 0 1em",
+								textDecoration: "none",
+								contentText: result.toString()
+							}
+						})});
+
+						usedKeys.add(key);
+					}
+
+					// Delta the new decorators
+					oldDecorations = editor.deltaDecorations(oldDecorations, decorators);
+
+					// Cleanup old keys
+					for (const key of decorationKeys) {
+						if (!usedKeys.has(key)) {
+							editor._codeEditorService.removeDecorationType(key);
+							decorationKeys.delete(key);
+						}
+					}
+
+					// Set markers
+					monaco.editor.setModelMarkers(editor.getModel(), "math", markers);
+
+					// Put text in hidden textarea to persist data
+					persistance.value = editor.getValue();
+				}
+
+				update();
+			});
+		</script>
+	</body>
+</html>
