@@ -135,7 +135,9 @@
 							[/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
 							[/'([^'\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
 							[/"/, 'string', '@string_double'],
-							[/'/, 'string', '@string_single']
+							[/'/, 'string', '@string_single'],
+
+							[/#.*/, "comment"]
 						],
 
 						string_double: [
