@@ -257,6 +257,7 @@
 				window.editor = editor;
 
 				editor.onDidChangeModelContent((event) => update());
+				window.addEventListener("resize", () => editor.layout());
 
 				let decorationKeys = new Set();
 				function makeDecoration(key, options) {
