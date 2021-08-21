@@ -195,6 +195,7 @@
 							range: new monaco.Range(1, 1, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 							text: math.evaluate(editor.getValue()).toString()
 						}]);
+						editor.setPosition(new monaco.Position(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER));
 					}
 				});
 
@@ -216,6 +217,7 @@
 							range: new monaco.Range(lineNumber, 1, lineNumber, Number.MAX_SAFE_INTEGER),
 							text: result.toString()
 						}]);
+						editor.setPosition(new monaco.Position(lineNumber, Number.MAX_SAFE_INTEGER));
 					}
 				});
 
@@ -232,6 +234,7 @@
 							range: new monaco.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER),
 							text: "\n" + math.evaluate(editor.getValue()).toString()
 						}]);
+						editor.setPosition(new monaco.Position(lineNumber, Number.MAX_SAFE_INTEGER));
 					}
 				});
 
@@ -251,6 +254,7 @@
 							range: new monaco.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER),
 							text: "\n" + result.toString()
 						}]);
+						editor.setPosition(new monaco.Position(lineNumber, Number.MAX_SAFE_INTEGER));
 					}
 				});
 
