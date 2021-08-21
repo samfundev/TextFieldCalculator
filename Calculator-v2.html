@@ -190,10 +190,13 @@
 					],
 					contextMenuGroupId: "1_modification",
 					run: function() {
+						if (finalResult == null)
+							return;
+
 						editor.pushUndoStop();
 						editor.executeEdits("replace-result-all", [{
 							range: new monaco.Range(1, 1, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-							text: math.evaluate(editor.getValue()).toString()
+							text: finalResult.toString()
 						}]);
 						editor.setPosition(new monaco.Position(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER));
 					}
@@ -206,7 +209,7 @@
 						monaco.KeyMod.Shift | monaco.KeyCode.Tab
 					],
 					contextMenuGroupId: "1_modification",
-					run: function() {;
+					run: function() {
 						const lineNumber = editor.getPosition().lineNumber;
 						const result = lineResults[lineNumber - 1];
 						if (result == null)
@@ -228,11 +231,13 @@
 					contextMenuGroupId: "1_modification",
 					run: function() {
 						const lineNumber = editor.getPosition().lineNumber;
+						if (finalResult == null)
+							return;
 
 						editor.pushUndoStop();
 						editor.executeEdits("insert-result-all", [{
 							range: new monaco.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER),
-							text: "\n" + math.evaluate(editor.getValue()).toString()
+							text: "\n" + finalResult.toString()
 						}]);
 						editor.setPosition(new monaco.Position(lineNumber, Number.MAX_SAFE_INTEGER));
 					}
@@ -243,7 +248,7 @@
 					label: "Insert a New Line with the Result of the Current Line",
 					keybindings: [],
 					contextMenuGroupId: "1_modification",
-					run: function() {;
+					run: function() {
 						const lineNumber = editor.getPosition().lineNumber;
 						const result = lineResults[lineNumber - 1];
 						if (result == null)
@@ -279,8 +284,10 @@
 					precision: 10
 				});
 
-				let oldDecorations = [];
 				let lineResults = [];
+				let finalResult;
+
+				let oldDecorations = [];
 				function update() {
 					const parser = math.parser();
 					const lines = editor.getValue().split("\n");
@@ -327,6 +334,11 @@
 						})});
 
 						usedKeys.add(key);
+					}
+
+					try {
+						finalResult = parser.evaluate(editor.getValue());
+					} catch (exception) {
 					}
 
 					// Delta the new decorators
