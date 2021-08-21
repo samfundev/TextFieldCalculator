@@ -323,6 +323,9 @@
 
 					lineResults = [];
 
+					// Extra functions
+					parser.evaluate("divmod(x, n) = [floor(x / n), x % n]");
+
 					// Parse each line of math
 					for (let [index, line] of lines.entries()) {
 						let result;
