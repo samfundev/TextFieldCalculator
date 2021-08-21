@@ -49,12 +49,19 @@
 					}
 				})
 				.map(([key, value]) => {
+					const doc = math.help(value).doc;
+
+					let count = 1;
+					function snippetify(_, before, middle) {
+						return `${before}$\{${count++}:${middle}\}`;
+					}
+
 					return {
 						label: key,
 						kind: typeof value == "function" ? monaco.languages.CompletionItemKind.Function : monaco.languages.CompletionItemKind.Constant,
-						insertText: typeof value == "function" ? `${key}($0)` : key,
+						insertText: typeof value == "function" ? doc.syntax[0].replaceAll(/(\(|, )(.+?)(?=\)|, )/g, snippetify) : key,
 						insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-						documentation: math.help(value).doc.description
+						documentation: doc.description
 					}
 				});
 
@@ -205,6 +212,7 @@
 					keybindings: [
 						monaco.KeyCode.Tab
 					],
+					precondition: "!inSnippetMode",
 					contextMenuGroupId: "1_modification",
 					run: function() {
 						if (finalResult == null)
@@ -225,6 +233,7 @@
 					keybindings: [
 						monaco.KeyMod.Shift | monaco.KeyCode.Tab
 					],
+					precondition: "!inSnippetMode",
 					contextMenuGroupId: "1_modification",
 					run: function() {
 						const lineNumber = editor.getPosition().lineNumber;
