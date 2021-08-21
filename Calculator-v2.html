@@ -58,31 +58,48 @@
 					}
 				});
 
+				function suggestionAliases(suggestion, aliases)
+				{
+					return aliases.map(alias => {
+						return { label: alias, insertText: alias, ...suggestion };
+					})
+				}
+
 				// Define math language
 				monaco.languages.register({ id: "math" });
 				monaco.languages.registerCompletionItemProvider("math", {
 					provideCompletionItems: function(model, position) {
 						const suggestions = [...baseSuggestions];
 
+						// Add line# suggestions
 						for (let i = 1; i < position.lineNumber; i++) {
 							const result = lineResults[i - 1];
 							if (result == undefined)
 								continue;
 
-							suggestions.push(
+							suggestions.push(...suggestionAliases(
 								{
-									label: `line${i}`,
-									insertText: `line${i}`,
 									kind: monaco.languages.CompletionItemKind.Variable,
 									documentation: `The result of line ${i}. (${result})`
 								},
-								{
-									label: `l${i}`,
-									insertText: `l${i}`,
-									kind: monaco.languages.CompletionItemKind.Variable,
-									documentation: `The result of line ${i}. (${result})`
-								}
-							);
+								[`line${i}`, `l${i}`]
+							));
+						}
+
+						// Add previous/answer suggestions
+						if (position.lineNumber !== 1)
+						{
+							const previousResult = lineResults[position.lineNumber - 2];
+							if (previousResult != undefined)
+							{
+								suggestions.push(...suggestionAliases(
+									{
+										kind: monaco.languages.CompletionItemKind.Variable,
+										documentation: `The result of the previous line. (${previousResult})`
+									},
+									["prev", "previous", "ans", "answer"]
+								));
+							}
 						}
 
 						return {
@@ -319,8 +336,15 @@
 
 						lineResults[index] = result;
 
+						// Result of this line
 						parser.set(`l${index + 1}`, result);
 						parser.set(`line${index + 1}`, result);
+
+						// Result of the previous line
+						parser.set("prev", result);
+						parser.set("previous", result);
+						parser.set("ans", result);
+						parser.set("answer", result);
 
 						// Add any results are decorators.
 						const key = hashCode(result.toString());
