@@ -142,7 +142,9 @@
 							],
 
 							[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-							[/0[xX][0-9a-fA-F]+/, 'number.hex'],
+							[/0x[0-9a-fA-F]+(\.[0-9a-fA-F]+)?/, 'number.hex'],
+							[/0b[01]+(\.[01]+)?/, 'number.binary'],
+							[/0o[0-7]+(\.[0-7]+)?/, 'number.octal'],
 							[/\d+(e\d+)?/, 'number'],
 
 							[/[()[\]]/, '@brackets'],
