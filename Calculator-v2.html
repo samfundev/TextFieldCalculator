@@ -152,7 +152,7 @@
 					tokenizer: {
 						root: [
 							[
-								/[a-z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F][0-9a-z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F]*/u,
+								/[a-zA-Z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F][0-9a-zA-Z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F]*/u,
 								{ cases: { '@keywords': 'keyword',
 										   '@default': 'identifier' } }
 							],
