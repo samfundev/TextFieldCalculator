@@ -5,9 +5,10 @@
 		<meta name="viewport" content="initial-scale=1">
 		<link rel="icon" href="favicon.ico">
 		<title>Text-Field Calculator</title>
+		<link rel="stylesheet" href="main.css">
 		<script src="math.js"></script>
 		<style>
-			html, body {
+			html, body, .content {
 				height: 100%;
 			}
 
@@ -15,9 +16,17 @@
 				margin: 0;
 			}
 
+			.content {
+				display: grid;
+				grid-template-rows: auto 1fr auto;
+			}
+
 			#container {
 				overflow: hidden;
-				height: 100%;
+			}
+
+			.header, footer {
+				margin: 10px;
 			}
 
 			@media (prefers-color-scheme: dark) {
@@ -28,10 +37,20 @@
 		</style>
 	</head>
 	<body>
+		<div class="content">
+			<div class="header">
+				<b>Text-Field Calculator</b>
+				<a href="Calculator.html">Version 1</a>
+			</div>
+			<div id="container"></div>
 
-		<div id="container"></div>
+			<textarea id="persistance" name="persistance" hidden></textarea>
 
-		<textarea id="persistance" name="persistance" hidden></textarea>
+			<footer>
+				<a href="https://mathjs.org/docs/index.html#documentation">Documentation</a>
+				<a href="https://github.com/samfundev/TextFieldCalculator">Source</a>
+			</footer>
+		</div>
 
 		<script src="monaco-editor/min/vs/loader.js"></script>
 		<script>
@@ -294,7 +313,10 @@
 				window.editor = editor;
 
 				editor.onDidChangeModelContent((event) => update());
-				window.addEventListener("resize", () => editor.layout());
+				window.addEventListener("resize", () => {
+					console.log({ width: window.innerWidth, height: window.innerHeight });
+					editor.layout({ width: window.innerWidth, height: window.innerHeight });
+				});
 
 				let decorationKeys = new Set();
 				function makeDecoration(key, options) {

@@ -5,6 +5,7 @@
 		<meta name="viewport" content="initial-scale=1">
 		<link rel="icon" href="favicon.ico">
 		<title>Text-Field Calculator</title>
+		<link rel="stylesheet" href="main.css">
 		<script src="jquery-3.6.0.min.js"></script>
 		<script src="math.js"></script>
 		<script>
@@ -99,23 +100,11 @@
 		</script>
 		<style>
 			body {
-				margin-left: 10px;
-				margin-right: 10px;
-
-				font-size: 35px;
-				font-family: monospace;
-			}
-
-			.header {
 				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				border-bottom: 1px solid black;
-				margin-bottom: 0.25em;
-			}
+				flex-direction: column;
+				min-height: calc(100vh - 20px);
 
-			.links {
-				font-size: 75%;
+				margin: 10px;
 			}
 
 			.input {
@@ -127,51 +116,28 @@
 				font-size: inherit;
 			}
 
-			.error {
-				color: rgb(255, 50, 50);
+			.output {
+				font-family: monospace;
 			}
 
-			@media (prefers-color-scheme: dark) {
-				body {
-					background-color: rgb(50, 50, 50);
-					color: white;
-				}
-
-				.header {
-					border-bottom-color: white;
-				}
-
-				textarea {
-					background-color: rgb(40, 40, 40);
-					color: inherit;
-					border-color: rgb(80, 80, 80);
-					border-style: solid;
-					border-width: 1px;
-				}
-
-				a:link {
-					color: rgb(170, 170, 170);
-				}
-
-				a:visited {
-					color: rgb(130, 130, 130);
-				}
+			.error {
+				color: rgb(255, 50, 50);
 			}
 		</style>
 	</head>
 	<body>
 		<div class="header">
 			<b>Text-Field Calculator</b>
-			<div class="links">
-				<a href="https://mathjs.org/docs/index.html#documentation">Documentation</a>
-				<a href="Calculator-v2.html">V2 Beta</a>
-				<a href="https://github.com/samfundev/TextFieldCalculator">Source</a>
-			</div>
+			<a href="Calculator-v2.html">Version 2</a>
 		</div>
 		<textarea class="input" autofocus></textarea>
 		<div class="output-wrap">
 			<div style="font-weight: bold;">Output:</div><div class="output"></div>
 			<pre></pre>
 		</div>
+		<footer>
+			<a href="https://mathjs.org/docs/index.html#documentation">Documentation</a>
+			<a href="https://github.com/samfundev/TextFieldCalculator">Source</a>
+		</footer>
 	</body>
 </html>

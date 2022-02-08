@@ -1,0 +1,48 @@
+body {
+	font-size: 35px;
+	font-family: sans-serif;
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 1px solid black;
+	margin-bottom: 0.25em;
+}
+
+footer {
+	margin-top: auto;
+	text-align: center;
+}
+
+a {
+	font-size: 75%;
+}
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background-color: rgb(50, 50, 50);
+		color: white;
+	}
+
+	.header {
+		border-bottom-color: white !important;
+	}
+
+	textarea {
+		background-color: rgb(40, 40, 40);
+		color: inherit;
+		border-color: rgb(80, 80, 80);
+		border-style: solid;
+		border-width: 1px;
+	}
+
+	a:link {
+		color: rgb(170, 170, 170);
+	}
+
+	a:visited {
+		color: rgb(130, 130, 130);
+	}
+}
