@@ -398,7 +398,7 @@
 					}
 
 					// Match each node's "compiled" text with the source code.
-					for (const node of nodes) {
+					for (const [index, node] of nodes.entries()) {
 						const compiled = (node.toString() + node.comment).replace(/\s+/g, "");
 						for (let i = 0; i < compiled.length; i++) {
 							const next = nextSourceCharacter();
@@ -443,7 +443,7 @@
 						}
 
 						// Add any results are decorators.
-						const key = hashCode(result.toString());
+						const key = hashCode(index.toString() + result.toString());
 						decorators.push({ range: new monaco.Range(currentLine + 1, Number.MAX_SAFE_INTEGER, currentLine + 1, Number.MAX_SAFE_INTEGER), options: makeDecoration(key, {
 							after: {
 								color: "gray",
