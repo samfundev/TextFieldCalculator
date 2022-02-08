@@ -312,57 +312,119 @@
 					precision: 32
 				});
 
+				// Extra functions
+				math.import({
+					divmod: (x, n) => math.matrix([Math.floor(x / n), x % n])
+				});
+
 				let lineResults = [];
 				let finalResult;
 
 				let oldDecorations = [];
 				function update() {
-					const parser = math.parser();
-					const lines = editor.getValue().split("\n");
+					const source = editor.getValue();
 					const decorators = [];
 					const usedKeys = new Set();
 					const markers = [];
+					let scope = new Map();
+
+					let parsed;
+					try {
+						parsed = math.parse(source);
+					} catch (exception) {
+						// Add any exceptions as markers
+						const column = exception.char - source.substring(0, exception.char - 1).lastIndexOf("\n") - 1;
+						const lineNumber = source.substring(0, exception.char - 1).split("").filter(char => char === "\n").length + 1;
+						markers.push({
+							message: exception.message,
+							startColumn: column,
+							endColumn: column,
+							startLineNumber: lineNumber,
+							endLineNumber: lineNumber
+						});
+					}
+
+					let nodes = [];
+					if (source.trim() === "" || parsed === undefined) {
+						nodes = [];
+					} else if (parsed.type === "BlockNode") {
+						nodes = parsed.blocks.map(block => block.node);
+					} else {
+						nodes = [parsed];
+					}
 
 					lineResults = [];
 
-					// Extra functions
-					parser.evaluate("divmod(x, n) = [floor(x / n), x % n]");
+					let currentLine = 0;
+					let sourceIndex = 0;
 
-					// Parse each line of math
-					for (let [index, line] of lines.entries()) {
+					function nextSourceCharacter() {
+						let character;
+						let comment = false;
+						while (true) {
+							character = source[sourceIndex++];
+							if (character === "\n") {
+								comment = false;
+								currentLine++;
+								continue;
+							} else if (/\s/.test(character) || character === ";" || comment) {
+								continue;
+							} else if (character === "#") {
+								comment = true;
+								continue;
+							}
+
+							break;
+						}
+
+						return character;
+					}
+
+					// Match each node's "compiled" text with the source code.
+					for (const node of nodes) {
+						const compiled = node.toString().replace(/\s+/g, "");
+						for (let i = 0; i < compiled.length; i++) {
+							const next = nextSourceCharacter();
+							if (next !== compiled[i]) {
+								console.error("Can't match with source.");
+								break;
+							}
+						}
+
 						let result;
 						try {
-							result = parser.evaluate(line.trim());
+							result = node.evaluate(scope);
 						} catch (exception) {
-							// Add any exceptions as markers
 							markers.push({
 								message: exception.message,
-								startColumn: exception.char ?? 1,
-								endColumn: exception.char ?? Number.MAX_SAFE_INTEGER,
-								startLineNumber: index + 1,
-								endLineNumber: index + 1
+								startColumn: 1,
+								endColumn: Number.MAX_SAFE_INTEGER,
+								startLineNumber: currentLine + 1,
+								endLineNumber: currentLine + 1
 							});
+
+							continue;
+						}
+						lineResults[currentLine] = result;
+
+						// Result of this line
+						scope.set(`l${currentLine + 1}`, result);
+						scope.set(`line${currentLine + 1}`, result);
+
+						// Result of the previous line
+						scope.set("prev", result);
+						scope.set("previous", result);
+						scope.set("ans", result);
+						scope.set("answer", result);
+
+						if (typeof result === "function") {
+							scope.set(result.name, result);
 							continue;
 						}
 
-						if (result == undefined || typeof result == "function")
-							continue;
-
-						lineResults[index] = result;
-
-						// Result of this line
-						parser.set(`l${index + 1}`, result);
-						parser.set(`line${index + 1}`, result);
-
-						// Result of the previous line
-						parser.set("prev", result);
-						parser.set("previous", result);
-						parser.set("ans", result);
-						parser.set("answer", result);
-
 						// Add any results are decorators.
 						const key = hashCode(result.toString());
-						decorators.push({ range: new monaco.Range(index + 1, Number.MAX_SAFE_INTEGER, index + 1, Number.MAX_SAFE_INTEGER), options: makeDecoration(key, {
+						decorators.push({ range: new monaco.Range(currentLine + 1, Number.MAX_SAFE_INTEGER, currentLine + 1, Number.MAX_SAFE_INTEGER), options: makeDecoration(key, {
 							after: {
 								color: "gray",
 								margin: "0 0 0 1em",
