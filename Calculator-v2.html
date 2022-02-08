@@ -380,17 +380,14 @@
 
 					function nextSourceCharacter() {
 						let character;
-						let comment = false;
 						while (true) {
 							character = source[sourceIndex++];
-							if (character === "\n") {
-								comment = false;
+							if (character === undefined) {
+								break;
+							} else if (character === "\n") {
 								currentLine++;
 								continue;
-							} else if (/\s/.test(character) || character === ";" || comment) {
-								continue;
-							} else if (character === "#") {
-								comment = true;
+							} else if (/\s/.test(character) || character === ";") {
 								continue;
 							}
 
@@ -402,7 +399,7 @@
 
 					// Match each node's "compiled" text with the source code.
 					for (const node of nodes) {
-						const compiled = node.toString().replace(/\s+/g, "");
+						const compiled = (node.toString() + node.comment).replace(/\s+/g, "");
 						for (let i = 0; i < compiled.length; i++) {
 							const next = nextSourceCharacter();
 							if (next !== compiled[i]) {
@@ -425,6 +422,9 @@
 
 							continue;
 						}
+
+						if (result === undefined) continue;
+
 						lineResults[currentLine] = result;
 
 						// Result of this line
