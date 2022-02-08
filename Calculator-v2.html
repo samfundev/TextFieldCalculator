@@ -44,8 +44,6 @@
 			</div>
 			<div id="container"></div>
 
-			<textarea id="persistance" name="persistance" hidden></textarea>
-
 			<footer>
 				<a href="https://mathjs.org/docs/index.html#documentation">Documentation</a>
 				<a href="https://github.com/samfundev/TextFieldCalculator">Source</a>
@@ -201,9 +199,10 @@
 					}
 				});
 
+				console.log(localStorage.getItem("content"));
 				var editor = monaco.editor.create(document.getElementById('container'), {
 					language: "math",
-					value: persistance.value,
+					value: localStorage.getItem("content") ?? "",
 					theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs",
 					mouseWheelZoom: true,
 					fontSize: 20,
@@ -477,8 +476,8 @@
 					// Set markers
 					monaco.editor.setModelMarkers(editor.getModel(), "math", markers);
 
-					// Put text in hidden textarea to persist data
-					persistance.value = editor.getValue();
+					// Put text in localStorage to persist data
+					localStorage.setItem("content", editor.getValue());
 				}
 
 				update();
