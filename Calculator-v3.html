@@ -342,50 +342,109 @@
 
 				let oldDecorations = [];
 				function update() {
-					const parser = math.parser();
-					const lines = editor.getValue().split("\n");
+					const source = editor.getValue();
 					const decorators = [];
 					const usedKeys = new Set();
 					const markers = [];
+					let scope = new Map();
+
+					let parsed;
+					try {
+						parsed = math.parse(source);
+					} catch (exception) {
+						// Add any exceptions as markers
+						const column = exception.char - source.substring(0, exception.char - 1).lastIndexOf("\n") - 1;
+						const lineNumber = source.substring(0, exception.char - 1).split("").filter(char => char === "\n").length + 1;
+						markers.push({
+							message: exception.message,
+							startColumn: column,
+							endColumn: column,
+							startLineNumber: lineNumber,
+							endLineNumber: lineNumber
+						});
+					}
+
+					let nodes = [];
+					if (source.trim() === "" || parsed === undefined) {
+						nodes = [];
+					} else if (parsed.type === "BlockNode") {
+						nodes = parsed.blocks.map(block => block.node);
+					} else {
+						nodes = [parsed];
+					}
 
 					lineResults = [];
 
+					let currentLine = 0;
+					let sourceIndex = 0;
+					const commentlessSource = source.replace(/#.+$/gm, "");
+					function nextSourceCharacter() {
+						let character;
+						while (true) {
+							character = commentlessSource[sourceIndex++];
+							if (character === undefined) {
+								break;
+							} else if (character === "\n") {
+								currentLine++;
+								continue;
+							} else if (/\s/.test(character) || character === ";") {
+								continue;
+							}
 
-					// Parse each line of math
-					for (let [index, line] of lines.entries()) {
+							break;
+						}
+
+						return character;
+					}
+
+					// Match each node's "compiled" text with the source code.
+					for (const [index, node] of nodes.entries()) {
+						const compiled = node.toString().replace(/\s+/g, "");
+						for (let i = 0; i < compiled.length; i++) {
+							const next = nextSourceCharacter();
+							if (next !== compiled[i]) {
+								console.error("Can't match with source.");
+								break;
+							}
+						}
+
 						let result;
 						try {
-							result = parser.evaluate(line.trim());
+							result = node.evaluate(scope);
 						} catch (exception) {
-							// Add any exceptions as markers
 							markers.push({
 								message: exception.message,
-								startColumn: exception.char ?? 1,
-								endColumn: exception.char ?? Number.MAX_SAFE_INTEGER,
-								startLineNumber: index + 1,
-								endLineNumber: index + 1
+								startColumn: 1,
+								endColumn: Number.MAX_SAFE_INTEGER,
+								startLineNumber: currentLine + 1,
+								endLineNumber: currentLine + 1
 							});
+
 							continue;
 						}
 
-						if (result == undefined || typeof result == "function")
-							continue;
+						if (result === undefined) continue;
 
-						lineResults[index] = result;
+						lineResults[currentLine] = result;
 
 						// Result of this line
-						parser.set(`l${index + 1}`, result);
-						parser.set(`line${index + 1}`, result);
+						scope.set(`l${currentLine + 1}`, result);
+						scope.set(`line${currentLine + 1}`, result);
 
 						// Result of the previous line
-						parser.set("prev", result);
-						parser.set("previous", result);
-						parser.set("ans", result);
-						parser.set("answer", result);
+						scope.set("prev", result);
+						scope.set("previous", result);
+						scope.set("ans", result);
+						scope.set("answer", result);
+
+						if (typeof result === "function") {
+							scope.set(result.name, result);
+							continue;
+						}
 
 						// Add any results are decorators.
-						const key = hashCode(result.toString());
-						decorators.push({ range: new monaco.Range(index + 1, Number.MAX_SAFE_INTEGER, index + 1, Number.MAX_SAFE_INTEGER), options: makeDecoration(key, {
+						const key = hashCode(index.toString() + result.toString());
+						decorators.push({ range: new monaco.Range(currentLine + 1, Number.MAX_SAFE_INTEGER, currentLine + 1, Number.MAX_SAFE_INTEGER), options: makeDecoration(key, {
 							after: {
 								color: "gray",
 								margin: "0 0 0 1em",
