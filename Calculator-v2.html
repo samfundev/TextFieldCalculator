@@ -377,11 +377,11 @@
 
 					let currentLine = 0;
 					let sourceIndex = 0;
-
+					const commentlessSource = source.replace(/#.+$/gm, "");
 					function nextSourceCharacter() {
 						let character;
 						while (true) {
-							character = source[sourceIndex++];
+							character = commentlessSource[sourceIndex++];
 							if (character === undefined) {
 								break;
 							} else if (character === "\n") {
@@ -399,7 +399,7 @@
 
 					// Match each node's "compiled" text with the source code.
 					for (const [index, node] of nodes.entries()) {
-						const compiled = (node.toString() + node.comment).replace(/\s+/g, "");
+						const compiled = node.toString().replace(/\s+/g, "");
 						for (let i = 0; i < compiled.length; i++) {
 							const next = nextSourceCharacter();
 							if (next !== compiled[i]) {
