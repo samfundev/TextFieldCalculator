@@ -21,10 +21,6 @@
 				grid-template-rows: auto 1fr auto;
 			}
 
-			#container {
-				overflow: hidden;
-			}
-
 			header, footer {
 				margin: 10px;
 			}
@@ -206,7 +202,8 @@
 					mouseWheelZoom: true,
 					fontSize: 35,
 					wordWrap: "on",
-					lineNumbersMinChars: 2
+					lineNumbersMinChars: 2,
+					fixedOverflowWidgets: true
 				}, {
 					storageService: {
 						get() {},
