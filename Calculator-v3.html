@@ -359,6 +359,8 @@
 
 					const lines = editor.getValue().split("\n");
 					for (let [index, line] of lines.entries()) {
+						if (index === lines.length - 1) continue;
+
 						try {
 							math.parse(line);
 						} catch (exception) {
