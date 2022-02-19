@@ -367,7 +367,7 @@
 						} catch (exception) {
 							if (messages.some(message => exception.message.startsWith(message))) {
 								lines[index] = "";
-								lines[index + 1] = line + lines[index + 1];
+								lines[index + 1] = line.replace(/#.+/g, "") + lines[index + 1];
 							}
 						}
 					}
