@@ -14,16 +14,11 @@
 
 			body {
 				margin: 0;
-				font-size: 32px;
 			}
 
 			.content {
 				display: grid;
 				grid-template-rows: auto 1fr auto;
-			}
-
-			#container {
-				overflow: hidden;
 			}
 
 			header, footer {
@@ -205,7 +200,7 @@
 					value: localStorage.getItem("content") ?? "",
 					theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs",
 					mouseWheelZoom: true,
-					fontSize: 24,
+					fontSize: 35,
 					wordWrap: "on",
 					lineNumbersMinChars: 2,
 					fixedOverflowWidgets: true
@@ -345,32 +340,13 @@
 				let oldDecorations = [];
 				function update() {
 					const parser = math.parser();
+					const lines = editor.getValue().split("\n");
 					const decorators = [];
 					const usedKeys = new Set();
 					const markers = [];
 
 					lineResults = [];
 
-					// Split by expression
-					const messages = [
-						"Unexpected end of expression",
-						"Parenthesis ) expected",
-						"End of matrix ] expected"
-					];
-
-					const lines = editor.getValue().split("\n");
-					for (let [index, line] of lines.entries()) {
-						if (index === lines.length - 1) continue;
-
-						try {
-							math.parse(line);
-						} catch (exception) {
-							if (messages.some(message => exception.message.startsWith(message))) {
-								lines[index] = "";
-								lines[index + 1] = line.replace(/#.+/g, "") + lines[index + 1];
-							}
-						}
-					}
 
 					// Parse each line of math
 					for (let [index, line] of lines.entries()) {
