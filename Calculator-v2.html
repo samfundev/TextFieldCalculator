@@ -314,7 +314,6 @@
 
 				editor.onDidChangeModelContent((event) => update());
 				window.addEventListener("resize", () => {
-					console.log({ width: window.innerWidth, height: window.innerHeight });
 					editor.layout({ width: window.innerWidth, height: window.innerHeight });
 				});
 
