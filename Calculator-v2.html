@@ -56,6 +56,16 @@
 			// https://stackoverflow.com/a/34842797/8213163
 			const hashCode = s => s.split('').reduce((a,b) => (((a << 5) - a) + b.charCodeAt(0))|0, 0)
 
+			function prettyPrint(value) {
+				if (typeof value === "string") {
+					return `"${value}"`;
+				} else if (typeof value === "object" && !(Object.getPrototypeOf(value) instanceof Object)) {
+					return `{ ${Object.entries(value).map(([key, val]) => `${key}: ${prettyPrint(val)}`).join(", ")} }`
+				}
+
+				return value.toString();
+			}
+
 			require.config({ paths: { 'vs': 'monaco-editor/min/vs' }});
 			require(['vs/editor/editor.main'], function() {
 				const baseSuggestions = Object.entries(math)
@@ -164,7 +174,7 @@
 							[/0o[0-7]+(\.[0-7]+)?/, 'number.octal'],
 							[/\d+(e\d+)?/, 'number'],
 
-							[/[()[\]]/, '@brackets'],
+							[/[()[\]{}]/, '@brackets'],
 
 							[/@symbols/, {
 								cases: {
@@ -173,7 +183,7 @@
 								}
 							}],
 
-							[/[;,]/, 'delimiter'],
+							[/[;,.]/, 'delimiter'],
 
 							// strings
 							[/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
@@ -390,6 +400,8 @@
 
 						if (result == undefined || typeof result == "function")
 							continue;
+
+						result = prettyPrint(result);
 
 						lineResults[index] = result;
 
