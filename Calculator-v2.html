@@ -335,7 +335,8 @@
 
 				// Extra functions
 				math.import({
-					divmod: (x, n) => math.matrix([Math.floor(x / n), x % n])
+					divmod: (x, n) => math.matrix([Math.floor(x / n), x % n]),
+					signatures: (f) => f.signatures,
 				});
 
 				let lineResults = [];
