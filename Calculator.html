@@ -32,6 +32,12 @@
 				precision: 32
 			});
 
+			// Extra functions
+			math.import({
+				divmod: (x, n) => math.matrix([Math.floor(x / n), x % n]),
+				signatures: (f) => f.signatures,
+			});
+
 			$(function() {
 				var output = $(".output");
 				var input = $(".input");
