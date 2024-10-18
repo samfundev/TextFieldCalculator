@@ -48,37 +48,31 @@
 					}
 
 					var type = getType(result);
-					output.toggleClass("error", type == "error");
-					$("pre").html("");
-					switch (type) {
-						case "number":
-						case "boolean":
-						case "decimal":
-							output.text(result);
-							break;
-						case "function":
-							output.text(math.help(result).doc.description);
-							break;
-						case "error":
-							output.text(result.message);
-							var position = /\(char (\d+)\)/.exec(result.message);
-							if (position) {
-								var pos = parseInt(position[1]);
-								var escaped = escapeHtml(expression);
-								$("pre").html(insert(escaped, pos - 1, "<span class='error'>!</span>"));
-							}
 
-							break;
-						case "object":
-							output.text(result.toString());
-							break;
-						case "string":
-							output.text(result);
-							break;
-						default:
-							output.text("");
-							break;
+					if (type == "error") {
+						var position = result.char;
+						if (position) {
+							const escaped = escapeHtml(expression);
+							const column = position - escaped.lastIndexOf("\n", position - 1) - 2;
+							const endOfLine = escaped.indexOf("\n", position) == -1 ? escaped.length : escaped.indexOf("\n", position);
+							const escapedMessage = escapeHtml(result.message);
+							const message = escapedMessage.substring(0, escapedMessage.length - ` (char ${position})`.length);
+							output.html(insert(escaped, endOfLine + 1, `<div class='error'>${' '.repeat(column)}^ ${message}</div>`));
+						} else {
+							output.html($("<div>").addClass("error").text(result.message));
+						}
+					} else {
+						if (result === undefined) {
+							result = "";
+						} else if (result.type === "ResultSet") {
+							result = result.entries.map(entry => math.format(entry)).join("\n");
+						} else {
+							result = math.format(result);
+						}
+
+						output.text(result);
 					}
+
 
 					// Put text in localStorage to persist data
 					localStorage.setItem("content", expression);
@@ -124,6 +118,7 @@
 
 			.output {
 				font-family: monospace;
+				white-space: pre-wrap;
 			}
 
 			.error {
@@ -139,7 +134,6 @@
 		<textarea class="input" autofocus></textarea>
 		<div class="output-wrap">
 			<div style="font-weight: bold;">Output:</div><div class="output"></div>
-			<pre></pre>
 		</div>
 		<footer>
 			<a href="https://mathjs.org/docs/index.html#documentation">Documentation</a>
