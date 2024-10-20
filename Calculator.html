@@ -71,9 +71,9 @@
 						if (result === undefined) {
 							result = "";
 						} else if (result.type === "ResultSet") {
-							result = result.entries.map(entry => math.format(entry)).join("\n");
+							result = result.entries.map(entry => math.format(entry, { notation: "fixed" })).join("\n");
 						} else {
-							result = math.format(result);
+							result = math.format(result, { notation: "fixed" });
 						}
 
 						output.text(result);

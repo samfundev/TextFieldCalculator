@@ -392,7 +392,7 @@
 						if (result == undefined)
 							continue;
 
-						result = math.format(result);
+						result = math.format(result, { notation: "fixed" });
 
 						lineResults[index] = result;
 
