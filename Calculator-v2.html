@@ -7,6 +7,7 @@
 		<title>Text-Field Calculator</title>
 		<link rel="stylesheet" href="main.css">
 		<script src="https://unpkg.com/mathjs@13.0.0/lib/browser/math.js"></script>
+		<script type="module" src="date.js"></script>
 		<style>
 			html, body, .content {
 				height: 100%;
@@ -46,13 +47,13 @@
 			<div id="container"></div>
 
 			<footer>
-				<a href="https://mathjs.org/docs/index.html#documentation">Documentation</a>
+				<a href="/documentation">Documentation</a>
 				<a href="https://github.com/samfundev/TextFieldCalculator">Source</a>
 			</footer>
 		</div>
 
 		<script src="monaco-editor/min/vs/loader.js"></script>
-		<script>
+		<script type="module">
 			// https://stackoverflow.com/a/34842797/8213163
 			const hashCode = s => s.split('').reduce((a,b) => (((a << 5) - a) + b.charCodeAt(0))|0, 0)
 
