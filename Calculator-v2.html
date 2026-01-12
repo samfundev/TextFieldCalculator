@@ -8,6 +8,7 @@
 		<link rel="stylesheet" href="main.css">
 		<script src="https://unpkg.com/mathjs@13.0.0/lib/browser/math.js"></script>
 		<script type="module" src="date.js"></script>
+		<script type="module" src="locked.js"></script>
 		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 		<style>
 			html, body, .content {
@@ -210,7 +211,8 @@
 					fontSize: 24,
 					wordWrap: "on",
 					lineNumbersMinChars: 2,
-					fixedOverflowWidgets: true
+					fixedOverflowWidgets: true,
+					lineNumbers: window.locked ? "off" : "on"
 				}, {
 					storageService: {
 						get() {},
@@ -398,15 +400,17 @@
 
 						lineResults[index] = result;
 
-						// Result of this line
-						parser.set(`l${index + 1}`, result);
-						parser.set(`line${index + 1}`, result);
-
-						// Result of the previous line
-						parser.set("prev", result);
-						parser.set("previous", result);
-						parser.set("ans", result);
-						parser.set("answer", result);
+						if (!window.locked) {
+							// Result of this line
+							parser.set(`l${index + 1}`, result);
+							parser.set(`line${index + 1}`, result);
+	
+							// Result of the previous line
+							parser.set("prev", result);
+							parser.set("previous", result);
+							parser.set("ans", result);
+							parser.set("answer", result);
+						}
 
 						// Add any results are decorators.
 						const key = hashCode(result.toString());
