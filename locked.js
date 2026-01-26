@@ -5,6 +5,7 @@ import {
 	subtractDependencies,
 	multiplyDependencies,
 	divideDependencies,
+	modDependencies,
 	parserDependencies,
 } from "https://esm.sh/mathjs@13.0.0";
 
@@ -39,6 +40,7 @@ const dependencies = deepFlatten({
 	subtractDependencies,
 	multiplyDependencies,
 	divideDependencies,
+	modDependencies,
 	parserDependencies,
 });
 
