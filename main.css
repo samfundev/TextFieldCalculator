@@ -46,3 +46,20 @@ a {
 		color: rgb(130, 130, 130);
 	}
 }
+
+.toastify {
+	padding-right: 40px;
+	max-width: 50ch;
+	background: #5477f5;
+}
+
+.toast-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 5px;
+  line-height: 1;
+  opacity: 1;
+  border: 1px solid white;
+  border-radius: 5px;
+}
