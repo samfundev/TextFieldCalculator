@@ -6,6 +6,9 @@ import {
 	multiplyDependencies,
 	divideDependencies,
 	modDependencies,
+	sinDependencies,
+	cosDependencies,
+	tanDependencies,
 	parserDependencies,
 } from "https://esm.sh/mathjs@13.0.0";
 
@@ -41,11 +44,13 @@ const dependencies = deepFlatten({
 	multiplyDependencies,
 	divideDependencies,
 	modDependencies,
+	sinDependencies,
+	cosDependencies,
+	tanDependencies,
 	parserDependencies,
 });
 
 const blocked = [
-	"FunctionNode",
 	"ObjectNode",
 	"AssignmentNode",
 	"ConditionalNode",
@@ -61,6 +66,19 @@ dependencies.createMatrix = factory("matrix", [], () => {
 dependencies.createFraction = factory("fraction", [], () => {
 	return () => {
 		throw new Error("Locked");
+	};
+});
+
+const OriginalFunctionNode = math.FunctionNode;
+dependencies.createFunctionNode = factory("FunctionNode", [], () => {
+	return class CheckedFunctionNode extends OriginalFunctionNode {
+		constructor(fn, args) {
+			if (["sin", "cos", "tan"].includes(fn.name)) {
+				super(fn, args);
+			} else {
+				throw new Error("Locked");
+			}
+		}
 	};
 });
 
