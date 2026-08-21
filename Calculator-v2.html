@@ -56,9 +56,6 @@
 
 		<script src="monaco-editor/min/vs/loader.js"></script>
 		<script type="module">
-			// https://stackoverflow.com/a/34842797/8213163
-			const hashCode = s => s.split('').reduce((a,b) => (((a << 5) - a) + b.charCodeAt(0))|0, 0)
-
 			require.config({ paths: { 'vs': 'monaco-editor/min/vs' }});
 			require(['vs/editor/editor.main'], function() {
 				const baseSuggestions = Object.entries(math)
@@ -321,17 +318,6 @@
 					editor.layout({ width: window.innerWidth, height: window.innerHeight });
 				});
 
-				let decorationKeys = new Set();
-				function makeDecoration(key, options) {
-					if (!decorationKeys.has(key)) {
-						editor._codeEditorService.registerDecorationType("result", key, options);
-
-						decorationKeys.add(key);
-					}
-
-					return editor._codeEditorService.resolveDecorationOptions(key, true);
-				}
-
 				math.config({
 					number: "BigNumber",
 					precision: 32
@@ -346,11 +332,10 @@
 				let lineResults = [];
 				let finalResult;
 
-				let oldDecorations = [];
+				const decorationsCollection = editor.createDecorationsCollection();
 				function update() {
 					const parser = math.parser();
 					const decorators = [];
-					const usedKeys = new Set();
 					const markers = [];
 
 					lineResults = [];
@@ -413,17 +398,14 @@
 						}
 
 						// Add any results are decorators.
-						const key = hashCode(result.toString());
-						decorators.push({ range: new monaco.Range(index + 1, Number.MAX_SAFE_INTEGER, index + 1, Number.MAX_SAFE_INTEGER), options: makeDecoration(key, {
+						const lineNumber = index + 1;
+						const endColumn = editor.getModel().getLineMaxColumn(lineNumber);
+						decorators.push({ range: new monaco.Range(lineNumber, 0, lineNumber, endColumn), options: {
 							after: {
-								color: "gray",
-								margin: "0 0 0 1em",
-								textDecoration: "none",
-								contentText: result.toString()
+								content: ` = ${result}`,
+								inlineClassName: "calculator-result"
 							}
-						})});
-
-						usedKeys.add(key);
+						}});
 					}
 
 					try {
@@ -431,16 +413,8 @@
 					} catch (exception) {
 					}
 
-					// Delta the new decorators
-					oldDecorations = editor.deltaDecorations(oldDecorations, decorators);
-
-					// Cleanup old keys
-					for (const key of decorationKeys) {
-						if (!usedKeys.has(key)) {
-							editor._codeEditorService.removeDecorationType(key);
-							decorationKeys.delete(key);
-						}
-					}
+					// Replace decorations from the previous calculation.
+					decorationsCollection.set(decorators);
 
 					// Set markers
 					monaco.editor.setModelMarkers(editor.getModel(), "math", markers);

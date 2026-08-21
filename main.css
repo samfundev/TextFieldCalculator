@@ -20,6 +20,10 @@ a {
 	font-size: 75%;
 }
 
+.calculator-result {
+	color: gray !important;
+}
+
 @media (prefers-color-scheme: dark) {
 	body {
 		background-color: rgb(50, 50, 50);
