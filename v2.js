@@ -1,0 +1,374 @@
+import * as monaco from "monaco-editor";
+
+window.MonacoEnvironment = {
+	getWorkerUrl: function (moduleId, label) {
+		return "https://esm.sh/monaco-editor@0.56.0/esm/vs/editor/editor.worker.js";
+	}
+};
+
+const baseSuggestions = Object.entries(math)
+.filter(([key, value]) => {
+	try {
+		math.help(value);
+		return true;
+	} catch (exception) {
+		return false;
+	}
+})
+.map(([key, value]) => {
+	const doc = math.help(value).doc;
+
+	let count = 1;
+	function snippetify(_, before, middle) {
+		return `${before}$\{${count++}:${middle}\}`;
+	}
+
+	return {
+		label: key,
+		kind: typeof value == "function" ? monaco.languages.CompletionItemKind.Function : monaco.languages.CompletionItemKind.Constant,
+		insertText: typeof value == "function" ? doc.syntax[0].replaceAll(/(\(|, )(.+?)(?=\)|, )/g, snippetify) : key,
+		insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+		documentation: doc.description
+	}
+});
+
+function suggestionAliases(suggestion, aliases)
+{
+	return aliases.map(alias => {
+		return { label: alias, insertText: alias, ...suggestion };
+	})
+}
+
+// Define math language
+monaco.languages.register({ id: "math" });
+monaco.languages.registerCompletionItemProvider("math", {
+	provideCompletionItems: function(model, position) {
+		const suggestions = [...baseSuggestions];
+
+		// Add line# suggestions
+		for (let i = 1; i < position.lineNumber; i++) {
+			const result = lineResults[i - 1];
+			if (result == undefined)
+				continue;
+
+			suggestions.push(...suggestionAliases(
+				{
+					kind: monaco.languages.CompletionItemKind.Variable,
+					documentation: `The result of line ${i}. (${result})`
+				},
+				[`line${i}`, `l${i}`]
+			));
+		}
+
+		// Add previous/answer suggestions
+		if (position.lineNumber !== 1)
+		{
+			const previousResult = lineResults[position.lineNumber - 2];
+			if (previousResult != undefined)
+			{
+				suggestions.push(...suggestionAliases(
+					{
+						kind: monaco.languages.CompletionItemKind.Variable,
+						documentation: `The result of the previous line. (${previousResult})`
+					},
+					["prev", "previous", "ans", "answer"]
+				));
+			}
+		}
+
+		return {
+			suggestions: suggestions
+		};
+	}
+});
+monaco.languages.setMonarchTokensProvider("math", {
+	keywords: [
+		'true', 'false'
+	],
+
+	operators: [
+		'=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=',
+		'&&', '||', '++', '--', '+', '-', '*', '/', '&', '|', '^', '%',
+		'<<', '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=', '^=',
+		'%=', '<<=', '>>=', '>>>='
+	],
+
+	defaultToken: "invalid",
+
+	symbols: /[=><!~?:&|+\-*\/\^%]+/,
+	escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+
+	tokenizer: {
+		root: [
+			[
+				/[a-zA-Z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F][0-9a-zA-Z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F]*/u,
+				{ cases: { '@keywords': 'keyword',
+							'@default': 'identifier' } }
+			],
+
+			[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+			[/0x[0-9a-fA-F]+(\.[0-9a-fA-F]+)?/, 'number.hex'],
+			[/0b[01]+(\.[01]+)?/, 'number.binary'],
+			[/0o[0-7]+(\.[0-7]+)?/, 'number.octal'],
+			[/\d+(e\d+)?/, 'number'],
+
+			[/[()[\]{}]/, '@brackets'],
+
+			[/@symbols/, {
+				cases: {
+					'@operators': 'operator',
+					'@default': ''
+				}
+			}],
+
+			[/[;,.]/, 'delimiter'],
+
+			// strings
+			[/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
+			[/'([^'\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
+			[/"/, 'string', '@string_double'],
+			[/'/, 'string', '@string_single'],
+
+			[/#.*/, "comment"]
+		],
+
+		string_double: [
+			[/[^\\"]+/, 'string'],
+			[/@escapes/, 'string.escape'],
+			[/\\./, 'string.escape.invalid'],
+			[/"/, 'string', '@pop']
+		],
+
+		string_single: [
+			[/[^\\']+/, 'string'],
+			[/@escapes/, 'string.escape'],
+			[/\\./, 'string.escape.invalid'],
+			[/'/, 'string', '@pop']
+		]
+	}
+});
+
+var editor = monaco.editor.create(document.getElementById('container'), {
+	language: "math",
+	value: localStorage.getItem("content") ?? "",
+	theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs",
+	mouseWheelZoom: true,
+	fontSize: 24,
+	wordWrap: "on",
+	lineNumbersMinChars: 2,
+	fixedOverflowWidgets: true,
+	lineNumbers: window.locked ? "off" : "on"
+}, {
+	storageService: {
+		get() {},
+		getBoolean(key) {
+			if (key === "expandSuggestionDocs")
+				return true;
+
+			return false;
+		},
+		getNumber() {},
+		store() {},
+		onWillSaveState() {},
+		onDidChangeStorage() {},
+		remove() {}
+	}
+});
+
+// Actions
+editor.addAction({
+	id: "replace-result-all",
+	label: "Replace Everything with the Result",
+	keybindings: [
+		monaco.KeyCode.Tab
+	],
+	precondition: "!inSnippetMode",
+	contextMenuGroupId: "1_modification",
+	run: function() {
+		if (finalResult == null)
+			return;
+
+		editor.pushUndoStop();
+		editor.executeEdits("replace-result-all", [{
+			range: new monaco.Range(1, 1, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+			text: finalResult.toString()
+		}]);
+		editor.setPosition(new monaco.Position(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER));
+	}
+});
+
+editor.addAction({
+	id: "replace-result-line",
+	label: "Replace Line with it's Result",
+	keybindings: [
+		monaco.KeyMod.Shift | monaco.KeyCode.Tab
+	],
+	precondition: "!inSnippetMode",
+	contextMenuGroupId: "1_modification",
+	run: function() {
+		const lineNumber = editor.getPosition().lineNumber;
+		const result = lineResults[lineNumber - 1];
+		if (result == null)
+			return;
+
+		editor.pushUndoStop();
+		editor.executeEdits("replace-result-line", [{
+			range: new monaco.Range(lineNumber, 1, lineNumber, Number.MAX_SAFE_INTEGER),
+			text: result.toString()
+		}]);
+		editor.setPosition(new monaco.Position(lineNumber, Number.MAX_SAFE_INTEGER));
+	}
+});
+
+editor.addAction({
+	id: "insert-result-all",
+	label: "Insert a New Line with the Result",
+	keybindings: [],
+	contextMenuGroupId: "1_modification",
+	run: function() {
+		const lineNumber = editor.getPosition().lineNumber;
+		if (finalResult == null)
+			return;
+
+		editor.pushUndoStop();
+		editor.executeEdits("insert-result-all", [{
+			range: new monaco.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER),
+			text: "\n" + finalResult.toString()
+		}]);
+		editor.setPosition(new monaco.Position(lineNumber, Number.MAX_SAFE_INTEGER));
+	}
+});
+
+editor.addAction({
+	id: "insert-result-line",
+	label: "Insert a New Line with the Result of the Current Line",
+	keybindings: [],
+	contextMenuGroupId: "1_modification",
+	run: function() {
+		const lineNumber = editor.getPosition().lineNumber;
+		const result = lineResults[lineNumber - 1];
+		if (result == null)
+			return;
+
+		editor.pushUndoStop();
+		editor.executeEdits("insert-result-line", [{
+			range: new monaco.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER),
+			text: "\n" + result.toString()
+		}]);
+		editor.setPosition(new monaco.Position(lineNumber, Number.MAX_SAFE_INTEGER));
+	}
+});
+
+window.editor = editor;
+
+editor.onDidChangeModelContent((event) => update());
+window.addEventListener("resize", () => {
+	editor.layout({ width: window.innerWidth, height: window.innerHeight });
+});
+
+math.config({
+	number: "BigNumber",
+	precision: 32
+});
+
+// Extra functions
+math.import({
+	divmod: (x, n) => math.matrix([Math.floor(x / n), x % n]),
+	signatures: (f) => f.signatures,
+});
+
+let lineResults = [];
+let finalResult;
+
+const decorationsCollection = editor.createDecorationsCollection();
+function update() {
+	const parser = math.parser();
+	const decorators = [];
+	const markers = [];
+
+	lineResults = [];
+
+	// Split by expression
+	const messages = [
+		"Unexpected end of expression",
+		"Parenthesis ) expected",
+		"End of matrix ] expected"
+	];
+
+	const lines = editor.getValue().split("\n");
+	for (let [index, line] of lines.entries()) {
+		if (index === lines.length - 1) continue;
+
+		try {
+			math.parse(line);
+		} catch (exception) {
+			if (messages.some(message => exception.message.startsWith(message))) {
+				lines[index] = "";
+				lines[index + 1] = line.replace(/#.+/g, "") + lines[index + 1];
+			}
+		}
+	}
+
+	// Parse each line of math
+	for (let [index, line] of lines.entries()) {
+		let result;
+		try {
+			result = parser.evaluate(line.trim());
+		} catch (exception) {
+			// Add any exceptions as markers
+			markers.push({
+				message: exception.message,
+				startColumn: exception.char ?? 1,
+				endColumn: exception.char ?? Number.MAX_SAFE_INTEGER,
+				startLineNumber: index + 1,
+				endLineNumber: index + 1
+			});
+			continue;
+		}
+
+		if (result == undefined)
+			continue;
+
+		result = math.format(result, { notation: "fixed" });
+
+		lineResults[index] = result;
+
+		if (!window.locked) {
+			// Result of this line
+			parser.set(`l${index + 1}`, result);
+			parser.set(`line${index + 1}`, result);
+
+			// Result of the previous line
+			parser.set("prev", result);
+			parser.set("previous", result);
+			parser.set("ans", result);
+			parser.set("answer", result);
+		}
+
+		// Inject the result immediately after the actual end of this line.
+		const lineNumber = index + 1;
+		const endColumn = editor.getModel().getLineMaxColumn(lineNumber);
+		decorators.push({ range: new monaco.Range(lineNumber, 0, lineNumber, endColumn), options: {
+			after: {
+				content: ` = ${result}`,
+				inlineClassName: "calculator-result"
+			}
+		}});
+	}
+
+	try {
+		finalResult = parser.evaluate(editor.getValue());
+	} catch (exception) {
+	}
+
+	// Replace decorations from the previous calculation.
+	decorationsCollection.set(decorators);
+
+	// Set markers
+	monaco.editor.setModelMarkers(editor.getModel(), "math", markers);
+
+	// Put text in localStorage to persist data
+	localStorage.setItem("content", editor.getValue());
+}
+
+update();
