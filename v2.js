@@ -158,22 +158,11 @@ var editor = monaco.editor.create(document.getElementById('container'), {
 	lineNumbersMinChars: 2,
 	fixedOverflowWidgets: true,
 	lineNumbers: window.locked ? "off" : "on"
-}, {
-	storageService: {
-		get() {},
-		getBoolean(key) {
-			if (key === "expandSuggestionDocs")
-				return true;
-
-			return false;
-		},
-		getNumber() {},
-		store() {},
-		onWillSaveState() {},
-		onDidChangeStorage() {},
-		remove() {}
-	}
 });
+
+// Show the suggestion docs by default
+const { widget } = editor.getContribution('editor.contrib.suggestController');
+widget.value._setDetailsVisible(true);
 
 // Actions
 editor.addAction({
