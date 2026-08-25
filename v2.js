@@ -2,7 +2,7 @@ import * as monaco from "monaco-editor";
 
 window.MonacoEnvironment = {
 	getWorkerUrl: function (moduleId, label) {
-		return "https://esm.sh/monaco-editor@0.56.0/esm/vs/editor/editor.worker.js";
+		return "https://cdn.jsdelivr.net/npm/monaco-editor@0.56.0/editor/editor.worker.js/+esm";
 	}
 };
 
