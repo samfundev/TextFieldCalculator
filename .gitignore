@@ -1,1 +1,9 @@
 node_modules
+
+_site
+dist
+.bundle
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor

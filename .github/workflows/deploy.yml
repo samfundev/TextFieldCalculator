@@ -1,0 +1,51 @@
+name: Deploy to Pages
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+# Allow the deploy job to publish to Pages via OIDC.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once, but let queued runs finish rather than
+# cancelling a deploy half way through.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      # Renders the markdown pages, copies static files, and bundles the v2
+      # app with content-hashed asset names. See build.js.
+      - name: Build
+        run: bun run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  # Only publish from master. Other branches build so you can catch
+  # breakage, and the artifact is downloadable from the run page.
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

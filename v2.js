@@ -1,8 +1,8 @@
 import * as monaco from "monaco-editor";
 
 window.MonacoEnvironment = {
-	getWorkerUrl: function (moduleId, label) {
-		return "https://cdn.jsdelivr.net/npm/monaco-editor@0.56.0/editor/editor.worker.js/+esm";
+	getWorker: function (moduleId, label) {
+		return new Worker(new URL("./monaco.worker.js", import.meta.url), { type: "module" });
 	}
 };
 

@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "bun build.js"
+  },
   "dependencies": {
     "monaco-editor": "^0.56.0"
   }
