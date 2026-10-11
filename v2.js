@@ -1,4 +1,6 @@
 import * as monaco from "monaco-editor";
+import { updateTabs, loadTabs } from "./tabs.js";
+import { $ } from "./utils.js";
 
 window.MonacoEnvironment = {
 	getWorker: function (moduleId, label) {
@@ -148,7 +150,7 @@ monaco.languages.setMonarchTokensProvider("math", {
 	}
 });
 
-var editor = monaco.editor.create(document.getElementById('container'), {
+export const editor = monaco.editor.create($('#container'), {
 	language: "math",
 	value: localStorage.getItem("content") ?? "",
 	theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs",
@@ -159,6 +161,8 @@ var editor = monaco.editor.create(document.getElementById('container'), {
 	fixedOverflowWidgets: true,
 	lineNumbers: window.locked ? "off" : "on"
 });
+
+loadTabs();
 
 // Show the suggestion docs by default
 const { widget } = editor.getContribution('editor.contrib.suggestController');
@@ -251,6 +255,7 @@ editor.addAction({
 window.editor = editor;
 
 editor.onDidChangeModelContent((event) => update());
+editor.onDidChangeModel(() => update());
 window.addEventListener("resize", () => {
 	editor.layout({ width: window.innerWidth, height: window.innerHeight });
 });
@@ -356,8 +361,8 @@ function update() {
 	// Set markers
 	monaco.editor.setModelMarkers(editor.getModel(), "math", markers);
 
-	// Put text in localStorage to persist data
-	localStorage.setItem("content", editor.getValue());
+	// Update tabs to reflect any changes in the current tab's title
+	updateTabs();
 }
 
 update();
